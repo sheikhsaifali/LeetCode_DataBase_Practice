@@ -1,0 +1,165 @@
+# 🧩 Problem: Combine Two Tables
+
+## 🟢 Difficulty: Easy  
+## 🏷️ Topics: SQL, Joins  
+## 🏢 Companies: Multiple
+
+---
+
+## 📘 Problem Statement
+
+You are given two tables: `Person` and `Address`.
+
+### Table: Person
+
+| Column Name | Type    |
+|-------------|---------|
+| personId    | int     |
+| lastName    | varchar |
+| firstName   | varchar |
+
+- `personId` is the **primary key**
+- Contains basic information about people
+
+---
+
+### Table: Address
+
+| Column Name | Type    |
+|-------------|---------|
+| addressId   | int     |
+| personId    | int     |
+| city        | varchar |
+| state       | varchar |
+
+- `addressId` is the **primary key**
+- Each row contains address details for a person
+
+---
+
+## 🎯 Objective
+
+Write a SQL query to retrieve:
+
+- `firstName`
+- `lastName`
+- `city`
+- `state`
+
+for **every person** in the `Person` table.
+
+---
+
+## ⚠️ Important Condition
+
+- If a person **does not have an address**, return:
+  - `NULL` for `city`
+  - `NULL` for `state`
+
+---
+
+## 📤 Output
+
+Return the result in **any order**.
+
+---
+
+## 🧪 Example
+
+### Input
+
+**Person**
+
+| personId | lastName | firstName |
+|----------|----------|-----------|
+| 1        | Wang     | Allen     |
+| 2        | Alice    | Bob       |
+
+**Address**
+
+| addressId | personId | city          | state      |
+|-----------|----------|---------------|------------|
+| 1         | 2        | New York City | New York   |
+| 2         | 3        | Leetcode      | California |
+
+---
+
+### Output
+
+| firstName | lastName | city          | state    |
+|-----------|----------|---------------|----------|
+| Allen     | Wang     | NULL          | NULL     |
+| Bob       | Alice    | New York City | New York |
+
+---
+
+## 🧠 Key Insight
+
+- You must return **all records from Person**
+- Even if there is **no matching record in Address**
+
+👉 This strongly hints at using a **LEFT JOIN**
+
+---
+
+## ⚔️ Approach Thinking
+
+- Identify join key → `personId`
+- Preserve all rows from `Person`
+- Fill missing matches with `NULL`
+
+---
+
+## 🛠️ Expected Concept
+
+- `LEFT JOIN`
+
+---
+
+## 📌 Follow-up (Think like engineer)
+
+- What happens if multiple addresses exist per person?
+- How would you handle duplicates?
+
+---
+
+## 💣 Mistakes to Avoid
+
+- ❌ Using INNER JOIN → will miss people without address  
+- ❌ Forgetting NULL handling  
+- ❌ Joining on wrong column  
+
+---
+
+## 🎯 Goal
+
+Understand:
+- When to use LEFT JOIN vs INNER JOIN  
+- How to preserve missing data in relational queries  
+
+======================================================================================================================================================================
+======================================================================================================================================================================
+
+# ✅ Solution: Combine Two Tables
+
+## 🧠 Approach
+
+The requirement is to return **all persons**, even if they don’t have an address.
+
+👉 This directly implies:
+- We must **preserve all rows from the Person table**
+- Missing matches from Address should return **NULL**
+
+---
+
+## 🛠️ SQL Query
+
+```sql
+SELECT 
+    person.firstName,
+    person.lastName,
+    address.city,
+    address.state
+FROM person
+LEFT JOIN address
+ON person.personId = address.personId;
