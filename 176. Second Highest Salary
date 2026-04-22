@@ -1,0 +1,158 @@
+⚔️ Second Highest Salary (SQL)
+
+Difficulty: Easy  
+Topic: SQL | Ranking | Aggregation
+
+--------------------------------------------------
+
+PROBLEM
+
+Table: Employee
+
+Columns:
+- id (int, primary key)
+- salary (int)
+
+Each row contains employee salary.
+
+--------------------------------------------------
+
+OBJECTIVE
+
+Find the SECOND HIGHEST DISTINCT salary.
+
+If it does NOT exist → return NULL
+
+--------------------------------------------------
+
+CORE IDEA
+
+This is NOT:
+- second row
+- second entry
+
+This is:
+→ second UNIQUE highest value
+
+--------------------------------------------------
+
+APPROACH 1: MAX + SUBQUERY (Most efficient)
+
+Query:
+SELECT MAX(salary) AS SecondHighestSalary
+FROM employee
+WHERE salary < (SELECT MAX(salary) FROM employee);
+
+LOGIC:
+1. Find highest salary
+2. Remove it using salary < max
+3. Take MAX again → second highest
+
+EDGE CASE:
+- Only 1 unique salary → no rows left
+→ MAX returns NULL
+
+COMPLEXITY:
+Time: O(n)
+Space: O(1)
+
+--------------------------------------------------
+
+APPROACH 2: ORDER BY + LIMIT
+
+Query:
+SELECT IFNULL(
+    (SELECT DISTINCT salary 
+     FROM employee 
+     ORDER BY salary DESC 
+     LIMIT 1 OFFSET 1),
+    NULL
+) AS SecondHighestSalary;
+
+LOGIC:
+1. Remove duplicates using DISTINCT
+2. Sort descending
+3. Skip highest using OFFSET 1
+4. Pick next using LIMIT 1
+
+IMPORTANT:
+Without DISTINCT → WRONG result (duplicates break logic)
+
+COMPLEXITY:
+Time: O(n log n)
+Space: O(n)
+
+--------------------------------------------------
+
+APPROACH 3: WINDOW FUNCTION (Advanced)
+
+Query:
+SELECT MAX(salary) AS SecondHighestSalary  
+FROM (
+    SELECT salary, DENSE_RANK() OVER (ORDER BY salary DESC) as rnk 
+    FROM employee
+) AS temp 
+WHERE rnk = 2;
+
+LOGIC:
+1. Assign rank:
+   highest → rank 1
+   second highest → rank 2
+2. Filter rnk = 2
+
+WHY DENSE_RANK:
+RANK → 1,1,3 (skips)
+DENSE_RANK → 1,1,2 (correct)
+
+COMPLEXITY:
+Time: O(n log n)
+Space: O(n)
+
+--------------------------------------------------
+
+PATTERN MEMORY
+
+When you see:
+- Nth highest
+- Top K
+- Ranking
+
+Think:
+1. Remove max → subquery
+2. Sort → limit/offset
+3. Rank → window function
+
+--------------------------------------------------
+
+COMMON MISTAKES
+
+- Forget DISTINCT
+- Use RANK instead of DENSE_RANK
+- Assume at least 2 values exist
+- Use wrong JOIN/logic
+
+--------------------------------------------------
+
+FINAL TAKEAWAY
+
+“Second highest” means:
+→ Remove highest
+OR
+→ Rank = 2
+
+--------------------------------------------------
+
+REAL WORLD USE
+
+- Salary analytics
+- Leaderboards
+- Top-N queries
+
+--------------------------------------------------
+
+REVISION TRIGGER
+
+If stuck, ask:
+“How do I remove the max OR rank values?”
+
+--------------------------------------------------
