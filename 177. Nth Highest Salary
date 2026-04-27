@@ -1,0 +1,62 @@
+Question: Table: Employee
+
++-------------+------+
+| Column Name | Type |
++-------------+------+
+| id          | int  |
+| salary      | int  |
++-------------+------+
+id is the primary key (column with unique values) for this table.
+Each row of this table contains information about the salary of an employee.
+ 
+
+Write a solution to find the nth highest distinct salary from the Employee table. If there are less than n distinct salaries, return null.
+
+The result format is in the following example.
+Solution:
+CREATE FUNCTION getNthHighestSalary(N INT) RETURNS INT
+BEGIN
+#Set N=N-1;
+  RETURN (
+      # Write your MySQL query statement below.
+      # Select ifnull ((select distinct(salary) from employee order by salary desc limit 1 offset N
+      Select ifnull ((Select max(salary) from (select salary, Dense_Rank() over (order by salary desc) as rnk from employee) as temp where rnk = N
+  ), null));
+END
+Technical Notes:
+I. Solution 1: Physical Pagination (LIMIT & OFFSET)This approach treats the table as a list of pages, where each "page" contains exactly one unique salary.
+The LogicUnique Selection: We use DISTINCT to collapse duplicate salaries into single values.
+Sorting: ORDER BY salary DESC puts the highest salaries at the top.Traversing: We "skip" the top salaries we don't want using OFFSET.Critical ConceptsThe $N-1$ Adjustment: SQL offsets are 0-indexed.
+To find the $1^{st}$ highest, we skip $0$ rows. 
+To find the $N^{th}$ highest, we must skip $N-1$ rows.Note: In MySQL functions, you must perform SET N = N - 1; outside the RETURN statement because OFFSET does not accept arithmetic expressions.
+Performance: This is efficient for small $N$. However, for very large datasets, OFFSET forces the database to scan all preceding rows before returning the result, which can be slow ($O(N)$ complexity).
+
+II. Solution 2: Logical Ranking (DENSE_RANK)This approach uses Window Functions to assign a logical rank to every row based on the data distribution.The LogicRanking: DENSE_RANK() assigns a rank to each salary.
+Scoping: We use a Subquery or CTE (Common Table Expression) because you cannot reference a window function result directly in a WHERE clause.Filtering: We select the salary where the calculated rank equals $N$.
+Critical ConceptsThe Ranking Trio:ROW_NUMBER(): Unique ID for every row (1, 2, 3, 4).
+RANK(): Ties get the same rank, but the next rank is skipped (1, 1, 3).
+DENSE_RANK(): Ties get the same rank, and no numbers are skipped (1, 1, 2). 
+This is mandatory for "Nth Highest" problems to handle salary ties correctly.
+Scalar Aggregation: Using MAX(salary) in the outer query acts as a safety mechanism. 
+If the $N^{th}$ rank doesn't exist, the query returns NULL rather than an empty result set, which is often the required behavior for functions.
+
+III. Comparative SummaryFeaturePhysical Pagination (OFFSET)Logical Ranking (DENSE_RANK)Indexing0-indexed (requires $N-1$)1-indexed (Direct $N$ match)Tie 
+HandlingRequires explicit DISTINCTHandles ties nativelySyntax ComplexitySimple / Standard SQLAdvanced / Requires SubqueriesBest Use CaseBasic "one-off" retrievalComplex reports (e.g., Top $N$ per Department)
+
+IV. Interview & Implementation TipsThe "Null" Case: Always verify if the requirement asks for a specific value or a NULL if $N$ exceeds the count of employees. 
+Aggregate functions like MAX() or MIN() are your best friends for ensuring a NULL return on empty sets.
+Schema Awareness: If the salary column is indexed, both methods perform significantly better. 
+Without an index, the database must perform a Full Table Scan and a Sort, which is expensive.CTE vs. Subquery: 
+In modern MySQL (8.0+), use CTEs (the WITH clause) for better readability. 
+It separates the "ranking logic" from the "filtering logic" clearly.Final Code Template (DENSE_RANK with CTE)SQLCREATE FUNCTION getNthHighestSalary(N INT) RETURNS INT
+BEGIN
+  RETURN (
+    WITH RankedSalaries AS (
+      SELECT salary, DENSE_RANK() OVER (ORDER BY salary DESC) as rnk
+      FROM Employee
+    )
+    SELECT MAX(salary)
+    FROM RankedSalaries
+    WHERE rnk = N
+  );
+END
