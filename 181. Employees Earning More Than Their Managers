@@ -1,0 +1,38 @@
+1. THE QUESTION
+---------------
+Find the names of employees who earn more than their direct managers.
+Columns: Id, Name, Salary, ManagerId
+
+2. APPROACH A: SELF-JOIN (Traditional)
+--------------------------------------
+A self-join treats one table as two separate entities.
+- 'e' (Employees)
+- 'm' (Managers)
+
+SQL CODE:
+SELECT e.Name AS Employee
+FROM Employee AS e
+JOIN Employee AS m ON e.ManagerId = m.Id
+WHERE e.Salary > m.Salary;
+
+3. APPROACH B: CTE (Common Table Expression)
+--------------------------------------------
+A CTE creates a temporary, virtual result set (using WITH) to make the code more readable.
+
+SQL CODE:
+WITH ManagerInfo AS (
+    SELECT Id, Salary 
+    FROM Employee
+)
+SELECT e.Name AS Employee
+FROM Employee e
+JOIN ManagerInfo m ON e.ManagerId = m.Id
+WHERE e.Salary > m.Salary;
+
+4. CTE EXPLANATION:
+- DEFINITION: The 'WITH' clause defines a temporary table named 'ManagerInfo'.
+- USAGE: In the main query, 'ManagerInfo' is treated like a real table.
+- BENEFIT: It clearly separates the "List of Managers" from the "List of Employees," making the logic easier to follow for complex reports.
+
+5. KEY PERFORMANCE TIP:
+Always ensure 'ManagerId' is indexed. This prevents the database from doing a full-table scan for every single employee lookup.
